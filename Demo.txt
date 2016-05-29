@@ -1,0 +1,82 @@
+
+1) Enable Container Module
+sudo SUSEConnect -p sle-module-containers/12/x86_64 -r ''
+
+2) Install docker
+sudo zypper install docker
+sudo systemctl enable docker.service && sudo systemctl start docker.service
+
+3) SUSE Linux Enterprise Images for Docker
+sudo zypper install sle2docker
+
+4) Let's search for docker Images and install a couple of them 
+
+zypper --quiet search  docker-image
+
+S | Name                              | Summary                                                   | Type      
+--+-----------------------------------+-----------------------------------------------------------+-----------
+  | docker-image-migrator             | No-downtime migration tool for Docker v1 image manifests. | srcpackage
+i | docker-image-migrator             | No-downtime migration tool for Docker v1 image manifests. | package   
+  | docker-image-migrator-debuginfo   | Debug information for package docker-image-migrator       | package   
+  | docker-image-migrator-debugsource | Debug sources for package docker-image-migrator           | package   
+i | sles11sp3-docker-image            | SUSE Linux Enterprise Server 11sp3 image for Docker       | package   
+i | sles11sp4-docker-image            | SUSE Linux Enterprise Server 11sp4 image for Docker       | package   
+i | sles12-docker-image               | SUSE Linux Enterprise Server 12 image for Docker          | package   
+i | sles12sp1-docker-image            | SUSE Linux Enterprise Server 12sp1 image for Docker       | package   
+
+sudo zypper install sles11sp3-docker-image
+sudo zypper install sles12-docker-image
+
+5) We can now list images
+
+sudo sle2docker list
+Available pre-built images:
+ - sles11sp3-docker.x86_64-1.1.0-Build9.1
+ - sles11sp4-docker.x86_64-1.1.1-Build11.1
+ - sles12-docker.x86_64-1.1.1-Build13.2
+ - sles12sp1-docker.x86_64-1.0.4-Build5.1
+
+
+
+6) Once installed they must be activated for been available to docker ;)
+
+sle2docker activate sles12sp1-docker.x86_64-1.0.4-Build5.1
+
+
+7) Now images are available to docker...
+docker images
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+suse/sles11sp3              1.1.0               a76d13598ee3        54 minutes ago      76.52 MB
+suse/sles11sp3              latest              a76d13598ee3        54 minutes ago      76.52 MB
+use/sles12sp1              1.0.4               b9d3275d07e6        4 weeks ago         98.88 MB
+suse/sles12sp1              latest              b9d3275d07e6        4 weeks ago         98.88 MB
+busybox                     latest              47bcc53f74dc        10 weeks ago        1.113 MB
+
+
+
+8) Let's build the simplest nodeapp using SuSE Enterprise Linux as Base Image ;)
+
+docker build -f suse-docker-simplest-nodeapp/Dockerfile -t suse-docker-simplest-nodeapp:demo suse-docker-simplest-nodeapp
+
+
+9) Let's now build a nginx loadbalancer using SuSE Enterprise Linux as Base Image :)
+
+docker build -f suse-docker-nginx-lb/Dockerfile -t suse-docker-nginx-lb:demo suse-docker-nginx-lb
+
+10) Now that we have our two images ready, we can start our simplest nodeapp application using docker compose
+
+docker-compose -f simplest-nodeapp-lb-compose.yml up -d
+
+
+11) Now let's check that everything is working
+
+docker ps 
+CONTAINER ID        IMAGE                               COMMAND                  CREATED             STATUS              PORTS                NAMES
+566c9a6391ee        suse-docker-simplest-nodeapp:demo   "node simpleapp.js 30"   15 seconds ago      Up 14 seconds       3000/tcp             demo_simplest-nodeapp_1
+6e3ed5bab373        suse-docker-nginx-lb:demo           "nginx -g 'daemon off"   15 seconds ago      Up 14 seconds       0.0.0.0:80->80/tcp   nginx-lb
+
+
+12) Check service locally with simple wget -q http://0.0.0.0:80 -O -
+
+
+
