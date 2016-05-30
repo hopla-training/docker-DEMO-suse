@@ -80,3 +80,125 @@ CONTAINER ID        IMAGE                               COMMAND                 
 
 
 
+
+
+
+---------------------------------------
+
+Update Images to DTR
+
+1) First update your local docker engine-client certs
+
+openssl s_client -connect 10.0.2.12:443 -showcerts </dev/null 2>/dev/null | openssl x509 -outform PEM |sudo tee /etc/pki/trust/anchors/10.0.2.12.crt
+
+---
+We can use instead 
+
+docker run --rm  -v /etc/pki/trust/anchors:/OUTDIR frjaraur/simple-ucp-tools -n https://10.0.2.12:443 -d
+
+----
+
+sudo update-ca-certificates
+
+sudo systemctl restart docker.service
+
+
+2) Now login to DTR
+
+docker login 10.0.2.12
+
+(I will use admin for this demo....)
+
+
+3) We will Tag the images for the demo ...
+
+docker tag suse-docker-nginx-lb:demo 10.0.2.12/admin/suse-docker-nginx-lb:demo
+
+docker tag suse-docker-simplest-nodeapp:demo 10.0.2.12/admin/suse-docker-simplest-nodeapp:demo
+
+4) Push images to DTR...
+
+docker push 10.0.2.12/admin/suse-docker-nginx-lb:demo
+The push refers to a repository [10.0.2.12/admin/suse-docker-nginx-lb]
+ef242cf7ce17: Pushed 
+635e8f2943ec: Pushed 
+176d58f16903: Pushed 
+4e40336ab4da: Pushed 
+02dc60a9f64e: Pushed 
+e92526364c14: Pushed 
+demo: digest: sha256:01a505eff2d614295b78053748ddb7de488c3444008cc707beb8d0c94055810a size: 5669
+
+
+docker push 10.0.2.12/admin/suse-docker-simplest-nodeapp:demo
+The push refers to a repository [10.0.2.12/admin/suse-docker-simplest-nodeapp]
+65c5f6665855: Pushed 
+94d97b719611: Pushed 
+61df25ff4e75: Pushed 
+7d0ece5c9002: Pushed 
+d2db801c858e: Pushed 
+3c51a423be42: Pushed 
+e92526364c14: Mounted from admin/suse-docker-nginx-lb 
+demo: digest: sha256:d2ce7139056f00fa77fcad42af6043f734aac428a0f68cc51cf2532286749f19 size: 7722
+
+
+
+--------------------
+vmsuse2:~/DEMO/certs # docker ps
+CONTAINER ID        IMAGE                                                                     COMMAND                  CREATED              STATUS              PORTS                                          NAMES
+ba7eba8c95fd        10.0.2.12/admin/suse-docker-nginx-lb:demo                                 "nginx -g 'daemon off"   About a minute ago   Up About a minute   10.0.2.11:8080->80/tcp                         vmsuse1/serene_brahmagupta
+81e0234652ba        10.0.2.12/admin/suse-docker-simplest-nodeapp:demo                         "node simpleapp.js 30"   2 minutes ago        Up 2 minutes        3000/tcp                                       vmsuse1/trusting_brahmagupta
+aa84166e7449        10.0.2.12/admin/suse-docker-simplest-nodeapp:demo                         "node simpleapp.js 30"   2 minutes ago        Up 2 minutes        3000/tcp                                       vmsuse1/kickass_lamarr
+6e03021e366c        10.0.2.12/admin/suse-docker-simplest-nodeapp:demo                         "node simpleapp.js 30"   2 minutes ago        Up 2 minutes        3000/tcp                                       vmsuse1/berserk_banach
+8c49289a876a        10.0.2.12/admin/suse-docker-simplest-nodeapp:demo                         "node simpleapp.js 30"   3 minutes ago        Up 3 minutes        3000/tcp                                       vmsuse1/condescending_knuth
+80fbc0703c8a        docker/dtr-nginx:2.0.0                                                    "/init --skip-runit /"   8 hours ago          Up About an hour    10.0.2.12:80->80/tcp, 10.0.2.12:443->443/tcp   vmsuse2/dtr-nginx-30588775d0fb
+97da82ee95a0        docker/dtr-api:2.0.0                                                      "/bin/server"            8 hours ago          Up About an hour    80/tcp                                         vmsuse2/dtr-api-30588775d0fb
+91e685002e05        docker/dtr-registry:2.0.0                                                 "/init --skip-runit /"   8 hours ago          Up About an hour    3000/tcp                                       vmsuse2/dtr-registry-30588775d0fb
+e4f70295033a        docker/dtr-rethink:2.0.0                                                  "/start.sh --bind all"   8 hours ago          Up About an hour    8080/tcp                                       vmsuse2/dtr-rethinkdb-30588775d0fb
+f741e177ffb1        sha256:205bc764d14b5c6980ef5812bc0587c30aa22e8c233280d36701e2f347bf4043   "/etcd"                  8 hours ago          Up About an hour    2379-2380/tcp, 4001/tcp, 7001/tcp              vmsuse2/dtr-etcd-30588775d0fb
+
+
+
+vmsuse2:~/DEMO/certs # docker run -d --net=DEMO-NET --net-alias=simplest-nodeapp 10.0.2.12/admin/suse-docker-simplest-nodeapp:demo
+8c49289a876aa05371717437d4b09942fd6b2b748968e8553deeb8964acdc502
+
+vmsuse2:~/DEMO/certs # docker run -d --net=DEMO-NET --net-alias=simplest-nodeapp -e constrains:node==vmsuse3 10.0.2.12/admin/suse-docker-simplest-nodeapp:demo
+6e03021e366c9645546846e95e80c267296e2e5d5f948c0681d92aab7f2faa14
+
+vmsuse2:~/DEMO/certs # docker run -d --net=DEMO-NET --net-alias=simplest-nodeapp -e constrains:node==vmsuse1 10.0.2.12/admin/suse-docker-simplest-nodeapp:demo
+aa84166e74493763987b289ccb64653152d26361bc84ce38921dbc85d6f80d70
+
+vmsuse2:~/DEMO/certs # docker run -d --net=DEMO-NET --net-alias=simplest-nodeapp -e constrains:node==vmsuse2 10.0.2.12/admin/suse-docker-simplest-nodeapp:demo
+81e0234652ba48353f8645e14d80e63d3500f868e948ce639a392e26a5b0230d
+
+vmsuse2:~/DEMO/certs # docker run -d --net=DEMO-NET --net-alias=loadbalancer -p 8080:80 10.0.2.12/admin/suse-docker-nginx-lb:demo
+ba7eba8c95fd0008fccb5d758095671a031972af14f6bc74646373315df774e9
+
+
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.4 - aa84166e7449
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.3 - 6e03021e366c
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.5 - 81e0234652ba
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.2 - 8c49289a876a
+vmsuse2:~/DEMO/certs # wget -q http://10.0.2.11:8080 -O -
+10.0.1.5 - 81e0234652ba
+
+
+
+
