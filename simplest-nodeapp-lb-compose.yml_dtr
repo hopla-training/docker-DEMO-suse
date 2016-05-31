@@ -1,0 +1,30 @@
+
+version: "2"
+
+# A Docker Compose file for configuration of the development environment
+
+services:
+  # load balancer
+  nginx-lb:
+    image: 10.0.2.12/admin/suse-docker-nginx-lb
+    container_name: nginx-lb
+    restart: unless-stopped
+    networks:
+      - simplest-nodeapp-lb-demo-net
+    ports:
+      - "8181:80"
+
+  simplest-nodeapp:
+    image: 10.0.2.12/admin/suse-docker-simplest-nodeapp
+    restart: unless-stopped
+    networks:
+       simplest-nodeapp-lb-demo-net:
+        aliases:
+          - simplest-nodeapp
+    expose:
+      - 3000
+    depends_on:
+      - nginx-lb
+
+networks:
+  simplest-nodeapp-lb-demo-net: {}
