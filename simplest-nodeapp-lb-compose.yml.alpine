@@ -1,0 +1,30 @@
+
+version: "2"
+
+# A Docker Compose file for configuration of the development environment
+
+services:
+  # load balancer
+  nginx-lb:
+    image: alpine-docker-nginx-lb:demo
+    container_name: nginx-lb
+    restart: unless-stopped
+    networks:
+      - simplest-nodeapp-lb-demo-net
+    ports:
+      - "80:80"
+
+  simplest-nodeapp:
+    image: alpine-docker-simplest-nodeapp:demo
+    restart: unless-stopped
+    networks:
+       simplest-nodeapp-lb-demo-net:
+        aliases:
+          - simplest-nodeapp
+    expose:
+      - 3000
+    depends_on:
+      - nginx-lb
+
+networks:
+  simplest-nodeapp-lb-demo-net: {}
