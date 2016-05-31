@@ -12,7 +12,7 @@ services:
     networks:
       - simplest-nodeapp-lb-demo-net
     ports:
-      - "8080:80"
+      - "8181:80"
 
   simplest-nodeapp:
     image: suse-docker-simplest-nodeapp:demo
