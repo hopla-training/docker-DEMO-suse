@@ -1,0 +1,481 @@
+
+1) Enable Container Module
+sudo SUSEConnect -p sle-module-containers/12/x86_64 -r ''
+
+2) Install docker
+sudo zypper install docker
+sudo systemctl enable docker.service && sudo systemctl start docker.service
+
+3) SUSE Linux Enterprise Images for Docker
+sudo zypper install sle2docker
+
+4) Let's search for docker Images and install a couple of them 
+
+zypper --quiet search  docker-image
+
+S | Name                              | Summary                                                   | Type      
+--+-----------------------------------+-----------------------------------------------------------+-----------
+  | docker-image-migrator             | No-downtime migration tool for Docker v1 image manifests. | srcpackage
+i | docker-image-migrator             | No-downtime migration tool for Docker v1 image manifests. | package   
+  | docker-image-migrator-debuginfo   | Debug information for package docker-image-migrator       | package   
+  | docker-image-migrator-debugsource | Debug sources for package docker-image-migrator           | package   
+i | sles11sp3-docker-image            | SUSE Linux Enterprise Server 11sp3 image for Docker       | package   
+i | sles11sp4-docker-image            | SUSE Linux Enterprise Server 11sp4 image for Docker       | package   
+i | sles12-docker-image               | SUSE Linux Enterprise Server 12 image for Docker          | package   
+i | sles12sp1-docker-image            | SUSE Linux Enterprise Server 12sp1 image for Docker       | package   
+
+sudo zypper install sles11sp3-docker-image
+sudo zypper install sles12-docker-image
+
+5) We can now list images
+
+sudo sle2docker list
+Available pre-built images:
+ - sles11sp3-docker.x86_64-1.1.0-Build9.1
+ - sles11sp4-docker.x86_64-1.1.1-Build11.1
+ - sles12-docker.x86_64-1.1.1-Build13.2
+ - sles12sp1-docker.x86_64-1.0.4-Build5.1
+
+
+
+6) Once installed they must be activated for been available to docker ;)
+
+sle2docker activate sles12sp1-docker.x86_64-1.0.4-Build5.1
+
+
+7) Now images are available to docker...
+docker images
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+suse/sles11sp3              1.1.0               a76d13598ee3        54 minutes ago      76.52 MB
+suse/sles11sp3              latest              a76d13598ee3        54 minutes ago      76.52 MB
+use/sles12sp1              1.0.4               b9d3275d07e6        4 weeks ago         98.88 MB
+suse/sles12sp1              latest              b9d3275d07e6        4 weeks ago         98.88 MB
+busybox                     latest              47bcc53f74dc        10 weeks ago        1.113 MB
+
+
+
+----------------------------------------------------------------------------------
+
+
+
+
+
+
+
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+suse/sles12sp1      1.0.4               b9d3275d07e6        4 weeks ago         98.88 MB
+suse/sles12sp1      latest              b9d3275d07e6        4 weeks ago         98.88 MB
+busybox             latest              47bcc53f74dc        10 weeks ago        1.113 MB
+
+
+$ docker build -t suse-docker-nginx-lb -f suse-docker-nginx-lb/Dockerfile suse-docker-nginx-lb
+Sending build context to Docker daemon 4.608 kB
+Step 1 : FROM suse/sles12sp1:latest
+ ---> b9d3275d07e6
+Step 2 : RUN zypper --quiet addrepo -G -t yum -c 'http://nginx.org/packages/sles/12' nginx &&  zypper --quiet --non-interactive update &&  zypper --quiet --non-interactive install nginx
+ ---> Running in 34c5d0e01c16
+
+The following 8 NEW packages are going to be installed:
+  dbus-1 dracut kbd kmod pkg-config systemd-presets-branding-SLE systemd-sysvinit udev
+
+The following 22 packages are going to be upgraded:
+  bash bzip2 ca-certificates-mozilla device-mapper libaugeas0 libbz2-1 libcap2 libcurl4 libffi4 libgcc_s1 libgcrypt20 libopenssl1_0_0 libreadline6 libsolv-tools libssh2-1 libstdc++6 libudev1 libxml2-2 libzypp openssl systemd zypper
+
+22 packages to upgrade, 8 new.
+Overall download size: 13.8 MiB. Already cached: 0 B. After the operation, additional 11.6 MiB will be used.
+Continue? [y/n/? shows all options] (y): y
+
+The following NEW package is going to be installed:
+  nginx
+
+The following package is not supported by its vendor:
+  nginx
+
+1 new package to install.
+Overall download size: 566.4 KiB. Already cached: 0 B. After the operation, additional 2.1 MiB will be used.
+Continue? [y/n/? shows all options] (y): y
+ ---> a3e401c5463e
+Removing intermediate container 34c5d0e01c16
+Step 3 : RUN zypper --quiet --non-interactive clean
+ ---> Running in c28917bb8b69
+ ---> aff1d6260a4b
+Removing intermediate container c28917bb8b69
+Step 4 : RUN ln -sf /dev/stdout /var/log/nginx/access.log
+ ---> Running in 31fa5f0970d3
+ ---> 288f23267868
+Removing intermediate container 31fa5f0970d3
+Step 5 : RUN ln -sf /dev/stderr /var/log/nginx/error.log
+ ---> Running in c04f2ed5cacd
+ ---> 736b1569aa5d
+Removing intermediate container c04f2ed5cacd
+Step 6 : COPY nginx.conf /etc/nginx/nginx.conf
+ ---> a6a73a361aea
+Removing intermediate container f7354bf64677
+Step 7 : EXPOSE 80
+ ---> Running in db658083167c
+ ---> d51e2db0bc0d
+Removing intermediate container db658083167c
+Step 8 : CMD nginx -g daemon off;
+ ---> Running in 77faf67f6bc6
+ ---> ef96499e89c1
+Removing intermediate container 77faf67f6bc6
+Successfully built ef96499e89c1
+
+
+
+$ docker build -t suse-docker-simplest-nodeapp -f suse-docker-simplest-nodeapp/Dockerfile suse-docker-simplest-nodeapp
+Sending build context to Docker daemon 7.168 kB
+Step 1 : FROM suse/sles12sp1:latest
+ ---> b9d3275d07e6
+Step 2 : RUN zypper --quiet --non-interactive update &&  zypper --quiet --non-interactive install wget tar xz
+ ---> Running in c6eb1ec846a2
+
+The following 8 NEW packages are going to be installed:
+  dbus-1 dracut kbd kmod pkg-config systemd-presets-branding-SLE systemd-sysvinit udev
+
+The following 22 packages are going to be upgraded:
+  bash bzip2 ca-certificates-mozilla device-mapper libaugeas0 libbz2-1 libcap2 libcurl4 libffi4 libgcc_s1 libgcrypt20 libopenssl1_0_0 libreadline6 libsolv-tools libssh2-1 libstdc++6 libudev1 libxml2-2 libzypp openssl systemd zypper
+
+22 packages to upgrade, 8 new.
+Overall download size: 13.8 MiB. Already cached: 0 B. After the operation, additional 11.6 MiB will be used.
+Continue? [y/n/? shows all options] (y): y
+
+The following 2 NEW packages are going to be installed:
+  tar wget
+
+The following package is recommended, but will not be installed (only required packages will be installed):
+  tar-lang
+
+2 new packages to install.
+Overall download size: 983.6 KiB. Already cached: 0 B. After the operation, additional 3.1 MiB will be used.
+Continue? [y/n/? shows all options] (y): y
+ ---> 147e2b203f41
+Removing intermediate container c6eb1ec846a2
+Step 3 : RUN zypper --quiet --non-interactive clean
+ ---> Running in f5c95a46e873
+ ---> 0003e51da7c4
+Removing intermediate container f5c95a46e873
+Step 4 : ENV APPDIR /APP
+ ---> Running in 54e03a3d0a26
+ ---> ff0581429878
+Removing intermediate container 54e03a3d0a26
+Step 5 : WORKDIR ${APP}
+ ---> Running in 9bd7dd7e117e
+ ---> 7ccb8218e2d7
+Removing intermediate container 9bd7dd7e117e
+Step 6 : RUN wget --quiet https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-x64.tar.xz -O /tmp/node.tar.xz &&  tar -Jxf /tmp/node.tar.xz --strip-components=1 >/dev/null 2>&1
+ ---> Running in 51fdbce1f7db
+ ---> dc13a3204ae6
+Removing intermediate container 51fdbce1f7db
+Step 7 : ADD simpleapp.js simpleapp.js
+ ---> 6c83dbcb5c6d
+Removing intermediate container d4036c38cf24
+Step 8 : ADD package.json package.json
+ ---> 6f36d80a9acf
+Removing intermediate container 3a27eaf7d1e2
+Step 9 : ENV PATH $PATH:/${APPDIR}/bin
+ ---> Running in bdcee68cdce4
+ ---> 5874d0988ff0
+Removing intermediate container bdcee68cdce4
+Step 10 : RUN npm install
+ ---> Running in 0db8a2ffe78e
+npm WARN package.json simpleapp@1.0.0 No repository field.
+my-local-ip@1.0.0 node_modules/my-local-ip
+ ---> 05ee9883c692
+Removing intermediate container 0db8a2ffe78e
+Step 11 : CMD node simpleapp.js 3000
+ ---> Running in 23a9eb2a9b66
+ ---> 230491c2503a
+Removing intermediate container 23a9eb2a9b66
+Step 12 : EXPOSE 3000
+ ---> Running in 59a182d57034
+ ---> adb2130381e0
+Removing intermediate container 59a182d57034
+Successfully built adb2130381e0
+
+
+$ docker images
+REPOSITORY                     TAG                 IMAGE ID            CREATED             SIZE
+suse-docker-simplest-nodeapp   latest              adb2130381e0        31 seconds ago      223.7 MB
+suse-docker-nginx-lb           latest              ef96499e89c1        3 minutes ago       178.5 MB
+suse/sles12sp1                 1.0.4               b9d3275d07e6        4 weeks ago         98.88 MB
+suse/sles12sp1                 latest              b9d3275d07e6        4 weeks ago         98.88 MB
+busybox                        latest              47bcc53f74dc        10 weeks ago        1.113 MB
+
+
+$ docker tag suse-docker-simplest-nodeapp 10.0.2.12/admin/suse-docker-simplest-nodeapp
+
+$ docker tag suse-docker-nginx-lb 10.0.2.12/admin/suse-docker-nginx-lb
+
+
+$ docker images
+REPOSITORY                                     TAG                 IMAGE ID            CREATED             SIZE
+10.0.2.12/admin/suse-docker-simplest-nodeapp   latest              adb2130381e0        2 minutes ago       223.7 MB
+suse-docker-simplest-nodeapp                   latest              adb2130381e0        2 minutes ago       223.7 MB
+10.0.2.12/admin/suse-docker-nginx-lb           latest              ef96499e89c1        4 minutes ago       178.5 MB
+suse-docker-nginx-lb                           latest              ef96499e89c1        4 minutes ago       178.5 MB
+suse/sles12sp1                                 1.0.4               b9d3275d07e6        4 weeks ago         98.88 MB
+suse/sles12sp1                                 latest              b9d3275d07e6        4 weeks ago         98.88 MB
+busybox                                        latest              47bcc53f74dc        10 weeks ago        1.113 MB
+
+
+
+$ docker login 10.0.2.12
+Username (jramirez): admin
+Password: 
+Login Succeeded
+
+
+$ docker push 10.0.2.12/admin/suse-docker-simplest-nodeapp
+The push refers to a repository [10.0.2.12/admin/suse-docker-simplest-nodeapp]
+6b55e3a20445: Pushed 
+94d97b719611: Mounted from jramirez/suse-docker-simplest-nodeapp 
+61df25ff4e75: Mounted from jramirez/suse-docker-simplest-nodeapp 
+517652e9cd62: Pushed 
+7a0831d8dce6: Pushed 
+613445421754: Pushed 
+e92526364c14: Mounted from jramirez/suse-docker-simplest-nodeapp 
+latest: digest: sha256:8b2e2b05617c5d1b6144352bb7eefed3f7e83e10c8b48be864bf230fa5a7a47c size: 7721
+
+
+$ docker push 10.0.2.12/admin/suse-docker-nginx-lb
+The push refers to a repository [10.0.2.12/admin/suse-docker-nginx-lb]
+ad93fbf83636: Pushed 
+faccb0839bc2: Pushed 
+10fe0bf99829: Pushed 
+fea8bda07d6b: Pushed 
+0229ff4986d0: Pushed 
+e92526364c14: Mounted from admin/suse-docker-simplest-nodeapp 
+latest: digest: sha256:7dd32bcd10ceec35ea9df999345aa9b57a159675422d64f2dbb0b177a6187064 size: 5710
+
+
+
+
+Now Connect to docker swarm cluster...
+
+$ docker run --rm --name simple-ucp-tools -v /tmp:/OUTDIR frjaraur/simple-ucp-tools -n https://10.0.2.11
+Unable to find image 'frjaraur/simple-ucp-tools:latest' locally
+latest: Pulling from frjaraur/simple-ucp-tools
+d0ca440e8637: Already exists 
+39382063c3af: Already exists 
+07154fdae359: Already exists 
+8fabed81d665: Already exists 
+Digest: sha256:fcac546ac88aa0ac09a2e12c30f26abe93e29c0847468b5497bf8b2d1987b8b1
+Status: Downloaded newer image for frjaraur/simple-ucp-tools:latest
+
+UCP URL:	https://10.0.2.11
+
+UCP USERNAME:	admin
+
+UCP PASSWORD:	xxxxx
+
+
+$ ls -1 
+ca.pem
+cert.pem
+cert.pub
+config-err-Ku8obu
+env.cmd
+env.ps1
+env.sh
+key.pem
+
+$ source env.sh
+
+$ docker info
+Containers: 61
+ Running: 35
+ Paused: 0
+ Stopped: 26
+Images: 63
+Server Version: swarm/1.1.3
+Role: primary
+Strategy: spread
+Filters: health, port, dependency, affinity, constraint
+Nodes: 3
+ vmsuse1: 10.0.2.11:12376
+  └ Status: Healthy
+  └ Containers: 22
+  └ Reserved CPUs: 0 / 1
+  └ Reserved Memory: 0 B / 1.95 GiB
+  └ Labels: executiondriver=, kernelversion=3.12.57-60.35-default, operatingsystem=SUSE Linux Enterprise Server 12 SP1, storagedriver=btrfs
+  └ Error: (none)
+  └ UpdatedAt: 2016-05-31T12:22:04Z
+ vmsuse2: 10.0.2.12:12376
+  └ Status: Healthy
+  └ Containers: 19
+  └ Reserved CPUs: 0 / 1
+  └ Reserved Memory: 0 B / 1.95 GiB
+  └ Labels: executiondriver=, kernelversion=3.12.57-60.35-default, operatingsystem=SUSE Linux Enterprise Server 12 SP1, storagedriver=btrfs
+  └ Error: (none)
+  └ UpdatedAt: 2016-05-31T12:21:47Z
+ vmsuse3: 10.0.2.13:12376
+  └ Status: Healthy
+  └ Containers: 20
+  └ Reserved CPUs: 0 / 1
+  └ Reserved Memory: 0 B / 1.95 GiB
+  └ Labels: executiondriver=, kernelversion=3.12.57-60.35-default, operatingsystem=SUSE Linux Enterprise Server 12 SP1, storagedriver=btrfs
+  └ Error: (none)
+  └ UpdatedAt: 2016-05-31T12:22:04Z
+Cluster Managers: 1
+ 10.0.2.11: Healthy
+  └ Orca Controller: https://10.0.2.11:443
+  └ Swarm Manager: tcp://10.0.2.11:2376
+  └ KV: etcd://10.0.2.11:12379
+Plugins: 
+ Volume: 
+ Network: 
+Kernel Version: 3.12.57-60.35-default
+Operating System: linux
+Architecture: amd64
+CPUs: 3
+Total Memory: 5.849 GiB
+Name: ucp-controller-vmsuse1
+ID: SAUX:6DUP:WGIU:N2RZ:SOVS:AQ45:ODGR:ZPGZ:HZ7N:XXT7:UMAM:OPOB
+Labels:
+ com.docker.ucp.license_key=YN2LEmECFAL78XJxclO94Y1damWbrvT3xoMGbdhIJNGX
+ com.docker.ucp.license_max_engines=10
+ com.docker.ucp.license_expires=2017-02-03 22:11:47 +0000 UTC
+
+
+
+$ docker images
+REPOSITORY                                     TAG                 IMAGE ID            CREATED             SIZE
+10.0.2.12/admin/suse-docker-simplest-nodeapp   latest              2ba66f373f9d        28 minutes ago      223.7 MB
+10.0.2.12/admin/suse-docker-nginx-lb           latest              4a2055bc0978        30 minutes ago      178.5 MB
+frjaraur/simple-ucp-tools                      latest              7682f7c4213e        41 hours ago        11.72 MB
+frjaraur/simple-ucp-tools                      latest              fb7ecd25dc3d        41 hours ago        11.72 MB
+suse/sles11sp3                                 1.1.0               a76d13598ee3        44 hours ago        76.52 MB
+suse/sles11sp3                                 latest              a76d13598ee3        44 hours ago        76.52 MB
+ubuntu                                         latest              2fa927b5cdd3        3 days ago          122 MB
+alpine                                         latest              13e1761bf172        3 weeks ago         4.793 MB
+docker/ucp                                     latest              ee334ac84bbb        3 weeks ago         20.41 MB
+docker/ucp-controller                          1.1.0               5f95572fe6ce        3 weeks ago         26.14 MB
+docker/ucp-swarm                               1.1.0               678b82f27688        3 weeks ago         18.11 MB
+docker/ucp-proxy                               1.1.0               386d494c7165        3 weeks ago         17.41 MB
+docker/ucp-auth                                1.1.0               4f3d521ca30c        3 weeks ago         26.76 MB
+docker/ucp-etcd                                1.1.0               c944711f701d        3 weeks ago         35.93 MB
+docker/ucp-compose                             1.1.0               7d4c484f1443        3 weeks ago         58.6 MB
+docker/ucp-cfssl                               1.1.0               75dc7b4ce872        3 weeks ago         54.22 MB
+docker/ucp-auth-store                          1.1.0               258269be969f        3 weeks ago         57.77 MB
+docker/dtr                                     2.0.0               67ca86320d00        3 weeks ago         47.89 MB
+docker/dtr                                     latest              67ca86320d00        3 weeks ago         47.89 MB
+docker/dtr-registry                            2.0.0               161fe89143e5        3 weeks ago         99.3 MB
+docker/dtr-api                                 2.0.0               a361a126752a        3 weeks ago         84.15 MB
+docker/dtr-rethink                             2.0.0               61fbedf648b6        3 weeks ago         57.77 MB
+docker/dtr-nginx                               2.0.0               1b5fc7f518f6        3 weeks ago         81.71 MB
+suse/sles12sp1                                 1.0.4               b9d3275d07e6        5 weeks ago         98.88 MB
+suse/sles12sp1                                 latest              b9d3275d07e6        5 weeks ago         98.88 MB
+busybox                                        latest              47bcc53f74dc        10 weeks ago        1.113 MB
+docker/trusted-registry                        latest              b154ec352fb3        3 months ago        291.8 MB
+docker/ucp-dsinfo                              1.1.0               1ff6e86f33a3        3 months ago        68.51 MB
+docker/dtr-etcd                                v2.2.4              205bc764d14b        4 months ago        28.65 MB
+paintedfox/postgresql                          latest              98df48e4e107        21 months ago       589.4 MB
+
+
+
+$ docker login 10.0.2.12
+
+$ docker-compose -f simplest-nodeapp-lb-compose.yml_dtr up -d
+Starting nginx-lb
+Starting dockerdemosuse_simplest-nodeapp_1
+
+$ docker-compose -f simplest-nodeapp-lb-compose.yml_dtr ps
+              Name                         Command           State           Ports          
+-------------------------------------------------------------------------------------------
+dockerdemosuse_simplest-nodeapp_1   node simpleapp.js 3000   Up      3000/tcp               
+nginx-lb                            nginx -g daemon off;     Up      10.0.2.13:8181->80/tcp 
+
+$ docker ps
+CONTAINER ID        IMAGE                                                                     COMMAND                  CREATED             STATUS              PORTS                                          NAMES
+06bd5bbf1ea4        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   36 minutes ago      Up 48 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_1
+fa5daa1809a6        10.0.2.12/admin/suse-docker-nginx-lb                                      "nginx -g 'daemon off"   37 minutes ago      Up 48 seconds       10.0.2.13:8181->80/tcp                         vmsuse3/nginx-lb
+80fbc0703c8a        docker/dtr-nginx:2.0.0                                                    "/init --skip-runit /"   46 hours ago        Up 3 hours          10.0.2.12:80->80/tcp, 10.0.2.12:443->443/tcp   vmsuse2/dtr-nginx-30588775d0fb
+97da82ee95a0        docker/dtr-api:2.0.0                                                      "/bin/server"            46 hours ago        Up 3 hours          80/tcp                                         vmsuse2/dtr-api-30588775d0fb
+91e685002e05        docker/dtr-registry:2.0.0                                                 "/init --skip-runit /"   46 hours ago        Up 3 hours          3000/tcp                                       vmsuse2/dtr-registry-30588775d0fb
+e4f70295033a        docker/dtr-rethink:2.0.0                                                  "/start.sh --bind all"   46 hours ago        Up 3 hours          8080/tcp                                       vmsuse2/dtr-rethinkdb-30588775d0fb
+f741e177ffb1        sha256:205bc764d14b5c6980ef5812bc0587c30aa22e8c233280d36701e2f347bf4043   "/etcd"                  46 hours ago        Up 3 hours          2379-2380/tcp, 4001/tcp, 7001/tcp              vmsuse2/dtr-etcd-30588775d0fb
+
+
+
+
+$ docker-compose -f simplest-nodeapp-lb-compose.yml_dtr scale simplest-nodeapp=15
+Creating and starting dockerdemosuse_simplest-nodeapp_4 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_5 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_6 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_7 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_8 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_9 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_10 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_11 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_12 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_13 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_14 ... done
+Creating and starting dockerdemosuse_simplest-nodeapp_15 ... done
+
+
+$ docker ps 
+CONTAINER ID        IMAGE                                                                     COMMAND                  CREATED             STATUS              PORTS                                          NAMES
+cbeb538fafb5        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   49 seconds ago      Up 25 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_14
+6368bd5c3f4c        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   49 seconds ago      Up 28 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_10
+d7ebec57ecef        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   49 seconds ago      Up 26 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_12
+1947e634ebf5        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   49 seconds ago      Up 24 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_11
+e797770664ef        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   49 seconds ago      Up 10 seconds       3000/tcp                                       vmsuse2/dockerdemosuse_simplest-nodeapp_9
+c497a4770f2c        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   49 seconds ago      Up 6 seconds        3000/tcp                                       vmsuse2/dockerdemosuse_simplest-nodeapp_5
+a0d8ad656c74        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   50 seconds ago      Up 4 seconds        3000/tcp                                       vmsuse2/dockerdemosuse_simplest-nodeapp_13
+d672fba5f52b        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   50 seconds ago      Up 12 seconds       3000/tcp                                       vmsuse2/dockerdemosuse_simplest-nodeapp_6
+033784b9ef3a        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   51 seconds ago      Up 23 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_7
+3e4ad4d99fe8        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   51 seconds ago      Up 5 seconds        3000/tcp                                       vmsuse2/dockerdemosuse_simplest-nodeapp_8
+38289b76c0e0        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   51 seconds ago      Up 23 seconds       3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_15
+487fe8d79bc9        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   52 seconds ago      Up 13 seconds       3000/tcp                                       vmsuse2/dockerdemosuse_simplest-nodeapp_4
+cc6b1d3a4858        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   4 minutes ago       Up 4 minutes        3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_3
+77fcb69da0c7        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   4 minutes ago       Up 4 minutes        3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_2
+06bd5bbf1ea4        10.0.2.12/admin/suse-docker-simplest-nodeapp                              "node simpleapp.js 30"   6 minutes ago       Up 6 minutes        3000/tcp                                       vmsuse3/dockerdemosuse_simplest-nodeapp_1
+fa5daa1809a6        10.0.2.12/admin/suse-docker-nginx-lb                                      "nginx -g 'daemon off"   6 minutes ago       Up 6 minutes        10.0.2.13:8181->80/tcp                         vmsuse3/nginx-lb
+80fbc0703c8a        docker/dtr-nginx:2.0.0                                                    "/init --skip-runit /"   45 hours ago        Up 3 hours          10.0.2.12:80->80/tcp, 10.0.2.12:443->443/tcp   vmsuse2/dtr-nginx-30588775d0fb
+97da82ee95a0        docker/dtr-api:2.0.0                                                      "/bin/server"            45 hours ago        Up 3 hours          80/tcp                                         vmsuse2/dtr-api-30588775d0fb
+91e685002e05        docker/dtr-registry:2.0.0                                                 "/init --skip-runit /"   45 hours ago        Up 3 hours          3000/tcp                                       vmsuse2/dtr-registry-30588775d0fb
+e4f70295033a        docker/dtr-rethink:2.0.0                                                  "/start.sh --bind all"   45 hours ago        Up 3 hours          8080/tcp                                       vmsuse2/dtr-rethinkdb-30588775d0fb
+f741e177ffb1        sha256:205bc764d14b5c6980ef5812bc0587c30aa22e8c233280d36701e2f347bf4043   "/etcd"                  45 hours ago        Up 3 hours          2379-2380/tcp, 4001/tcp, 7001/tcp              vmsuse2/dtr-etcd-30588775d0fb
+
+
+
+$ docker-compose -f simplest-nodeapp-lb-compose.yml_dtr stop
+Stopping dockerdemosuse_simplest-nodeapp_14 ... done
+Stopping dockerdemosuse_simplest-nodeapp_10 ... done
+Stopping dockerdemosuse_simplest-nodeapp_12 ... done
+Stopping dockerdemosuse_simplest-nodeapp_11 ... done
+Stopping dockerdemosuse_simplest-nodeapp_9 ... done
+Stopping dockerdemosuse_simplest-nodeapp_5 ... done
+Stopping dockerdemosuse_simplest-nodeapp_13 ... done
+Stopping dockerdemosuse_simplest-nodeapp_6 ... done
+Stopping dockerdemosuse_simplest-nodeapp_7 ... done
+Stopping dockerdemosuse_simplest-nodeapp_8 ... done
+Stopping dockerdemosuse_simplest-nodeapp_15 ... done
+Stopping dockerdemosuse_simplest-nodeapp_4 ... done
+Stopping dockerdemosuse_simplest-nodeapp_3 ... done
+Stopping dockerdemosuse_simplest-nodeapp_2 ... done
+Stopping dockerdemosuse_simplest-nodeapp_1 ... done
+Stopping nginx-lb ... done
+
+$ docker-compose -f simplest-nodeapp-lb-compose.yml_dtr up -d
+Starting nginx-lb
+Starting dockerdemosuse_simplest-nodeapp_14
+Starting dockerdemosuse_simplest-nodeapp_10
+Starting dockerdemosuse_simplest-nodeapp_12
+Starting dockerdemosuse_simplest-nodeapp_11
+Starting dockerdemosuse_simplest-nodeapp_9
+Starting dockerdemosuse_simplest-nodeapp_5
+Starting dockerdemosuse_simplest-nodeapp_13
+Starting dockerdemosuse_simplest-nodeapp_6
+Starting dockerdemosuse_simplest-nodeapp_7
+Starting dockerdemosuse_simplest-nodeapp_8
+Starting dockerdemosuse_simplest-nodeapp_15
+Starting dockerdemosuse_simplest-nodeapp_4
+Starting dockerdemosuse_simplest-nodeapp_3
+Starting dockerdemosuse_simplest-nodeapp_2
+Starting dockerdemosuse_simplest-nodeapp_1
+
+
+
